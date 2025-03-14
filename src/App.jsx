@@ -32,8 +32,8 @@ function App() {
         const shouldGenerateNew = 
           // Generate new if we have fewer than 3 images
           imageData.images.length < 3 || 
-          // Generate new every 100 loads initially (when we have 3 images)
-          (imageData.images.length === 3 && imageData.totalLoads % 100 === 0) ||
+          // Generate new every 5 loads initially (when we have 3 images)
+          (imageData.images.length === 3 && imageData.totalLoads % 5 === 0) ||
           // Generate new every 5 loads after we have 4+ images
           (imageData.images.length >= 4 && imageData.totalLoads % 5 === 0)
         
