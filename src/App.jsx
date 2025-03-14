@@ -14,9 +14,13 @@ function App() {
 
   // Function to clear cache and force refresh
   const clearCacheAndRefresh = () => {
-    localStorage.removeItem('backgroundImageData');
-    console.log('Cache cleared');
-    window.location.reload();
+    try {
+      localStorage.removeItem('backgroundImageData');
+      console.log('Cache cleared');
+      window.location.reload();
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    }
   }
 
   useEffect(() => {
@@ -24,91 +28,101 @@ function App() {
       setIsLoading(true)
       
       try {
-        // Force clear cache on first load to ensure we get fresh images
-        if (window.location.search.includes('forceClear=true')) {
-          localStorage.removeItem('backgroundImageData');
-          console.log('Cache forcefully cleared by URL parameter');
-          // Remove the parameter from URL
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, newUrl);
+        // Force clear cache if URL parameter is present
+        try {
+          if (window.location.search.includes('forceClear=true')) {
+            localStorage.removeItem('backgroundImageData');
+            console.log('Cache forcefully cleared by URL parameter');
+            
+            // Remove the parameter from URL
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+          }
+        } catch (error) {
+          console.error('Error handling URL parameters:', error);
         }
         
         // Get cached data from localStorage
-        const cachedData = localStorage.getItem('backgroundImageData')
-        let imageData = cachedData ? JSON.parse(cachedData) : {
-          images: [],
-          usageCount: 0,
-          totalLoads: 0
+        let imageData = { images: [], usageCount: 0, totalLoads: 0 };
+        
+        try {
+          const cachedData = localStorage.getItem('backgroundImageData');
+          if (cachedData) {
+            imageData = JSON.parse(cachedData);
+          }
+        } catch (error) {
+          console.error('Error parsing cached data:', error);
         }
         
         // Increment total loads counter
-        imageData.totalLoads += 1
+        imageData.totalLoads += 1;
         
-        // Always fetch a new image on first load after deployment
+        // Determine if we need to generate new images
         const shouldGenerateNew = 
-          // Generate new if we have fewer than 3 images
           imageData.images.length < 3 || 
-          // Generate new every 5 loads initially (when we have 3 images)
           (imageData.images.length === 3 && imageData.totalLoads % 5 === 0) ||
-          // Generate new every 5 loads after we have 4+ images
-          (imageData.images.length >= 4 && imageData.totalLoads % 5 === 0)
+          (imageData.images.length >= 4 && imageData.totalLoads % 5 === 0);
         
         if (shouldGenerateNew || imageData.images.length === 0) {
-          console.log('Fetching new background images from Unsplash...')
+          console.log('Fetching new background images from Unsplash...');
           
           // If we have no images yet, fetch 3 at once to initialize our collection
           if (imageData.images.length === 0) {
-            const imageUrls = await getMultipleMinimalistImages(3)
+            const imageUrls = await getMultipleMinimalistImages(3);
             if (imageUrls && imageUrls.length > 0) {
-              imageData.images = imageUrls
-              console.log('Initial set of images fetched from Unsplash')
+              imageData.images = imageUrls;
+              console.log('Initial set of images fetched from Unsplash');
             }
           } else {
             // Otherwise just fetch one new image
-            const imageUrl = await getRandomMinimalistImage()
+            const imageUrl = await getRandomMinimalistImage();
             if (imageUrl) {
               // Add new image to the collection
-              imageData.images.push(imageUrl)
-              console.log('New image fetched from Unsplash and added to cache')
+              imageData.images.push(imageUrl);
+              console.log('New image fetched from Unsplash and added to cache');
             }
           }
         }
         
         // Select a random image from our collection
-        let selectedImage
+        let selectedImage;
         
         if (imageData.images.length > 0) {
           // Use cached images if available
-          selectedImage = imageData.images[Math.floor(Math.random() * imageData.images.length)]
+          selectedImage = imageData.images[Math.floor(Math.random() * imageData.images.length)];
         } else {
           // Fall back to our default images if no cached images yet
-          selectedImage = FALLBACK_BACKGROUNDS[Math.floor(Math.random() * FALLBACK_BACKGROUNDS.length)]
+          selectedImage = FALLBACK_BACKGROUNDS[Math.floor(Math.random() * FALLBACK_BACKGROUNDS.length)];
         }
         
         // Update the background
-        setBackgroundImage(selectedImage)
+        setBackgroundImage(selectedImage);
         
         // Save updated data back to localStorage
-        localStorage.setItem('backgroundImageData', JSON.stringify(imageData))
+        try {
+          localStorage.setItem('backgroundImageData', JSON.stringify(imageData));
+        } catch (error) {
+          console.error('Error saving to localStorage:', error);
+        }
         
       } catch (error) {
-        console.error('Error managing background images:', error)
+        console.error('Error managing background images:', error);
         // Use a fallback image if there's an error
-        setBackgroundImage(FALLBACK_BACKGROUNDS[Math.floor(Math.random() * FALLBACK_BACKGROUNDS.length)])
+        setBackgroundImage(FALLBACK_BACKGROUNDS[Math.floor(Math.random() * FALLBACK_BACKGROUNDS.length)]);
       } finally {
         // Short timeout to ensure the loading animation is visible
         setTimeout(() => {
-          setIsLoading(false)
-        }, 800)
+          setIsLoading(false);
+        }, 800);
       }
-    }
+    };
 
-    generateAndManageBackgrounds()
-  }, [])
+    generateAndManageBackgrounds();
+  }, []);
 
   // Styles for the background image
   const backgroundStyle = {
-    backgroundImage: `url(${backgroundImage})`,
+    backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
@@ -119,7 +133,7 @@ function App() {
     height: '100%',
     zIndex: -1,
     transition: 'opacity 1s ease-in-out'
-  }
+  };
 
   // Style for the overlay to ensure text readability if needed
   const overlayStyle = {
@@ -130,7 +144,7 @@ function App() {
     height: '100%',
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
     zIndex: -1
-  }
+  };
 
   // Style for the refresh button
   const buttonStyle = {
@@ -145,12 +159,12 @@ function App() {
     cursor: 'pointer',
     fontSize: '14px',
     zIndex: 10
-  }
+  };
 
   return (
     <>
       {/* Background Image */}
-      <div style={backgroundStyle}></div>
+      {backgroundImage && <div style={backgroundStyle}></div>}
       
       {/* Subtle overlay */}
       <div style={overlayStyle}></div>
@@ -173,7 +187,7 @@ function App() {
         Clear Cache & Refresh
       </button>
     </>
-  )
+  );
 }
 
 export default App
