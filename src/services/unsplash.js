@@ -24,7 +24,17 @@ const SEARCH_TERMS = [
   'minimal desert',
   'pastel horizon',
   'minimalist nature',
-  'simple gradient landscape'
+  'simple gradient landscape',
+  'minimalist skyline',
+  'zen landscape',
+  'minimalist fog',
+  'minimalist snow',
+  'minimalist beach',
+  'minimalist sunset',
+  'minimalist dawn',
+  'minimalist lake',
+  'minimalist ocean',
+  'minimalist forest'
 ];
 
 /**
@@ -38,7 +48,11 @@ const COLOR_FILTERS = [
   'lavender',
   'yellow',
   'orange',
-  'beige'
+  'beige',
+  'white',
+  'black',
+  'minimal',
+  'pastel'
 ];
 
 /**
@@ -56,7 +70,7 @@ export const getRandomMinimalistImage = async () => {
     // Build query parameters
     const params = new URLSearchParams({
       query: randomSearchTerm,
-      orientation: 'landscape',
+      orientation: 'landscape', // Ensure we only get landscape photos
       content_filter: 'high',
       color: randomColor,
       // Add a timestamp to prevent caching
@@ -83,6 +97,13 @@ export const getRandomMinimalistImage = async () => {
     }
     
     const data = await response.json();
+    
+    // Double-check that we got a landscape-oriented image
+    if (data.width < data.height) {
+      console.log('Received portrait image instead of landscape, retrying...');
+      return getRandomMinimalistImage(); // Recursively retry if we got a portrait image
+    }
+    
     console.log('Successfully fetched image from Unsplash:', data.description || data.alt_description);
     
     // Return the full-size image URL (don't modify the URL)
@@ -109,7 +130,7 @@ export const getMultipleMinimalistImages = async (count = 3) => {
     // Build query parameters
     const params = new URLSearchParams({
       query: randomSearchTerm,
-      orientation: 'landscape',
+      orientation: 'landscape', // Ensure we only get landscape photos
       content_filter: 'high',
       color: randomColor,
       count: count,
@@ -139,8 +160,18 @@ export const getMultipleMinimalistImages = async (count = 3) => {
     const data = await response.json();
     console.log(`Successfully fetched ${count} images from Unsplash`);
     
+    // Filter out any portrait-oriented images
+    const landscapeImages = data.filter(photo => photo.width > photo.height);
+    
+    // If we don't have enough landscape images, fetch more to compensate
+    if (landscapeImages.length < count) {
+      console.log(`Only got ${landscapeImages.length} landscape images, fetching more...`);
+      const additionalImages = await getMultipleMinimalistImages(count - landscapeImages.length);
+      return [...landscapeImages.map(photo => photo.urls.full), ...additionalImages];
+    }
+    
     // Return an array of full-size image URLs (don't modify the URLs)
-    return data.map(photo => photo.urls.full);
+    return landscapeImages.map(photo => photo.urls.full);
   } catch (error) {
     console.error('Error fetching images from Unsplash:', error);
     return [];

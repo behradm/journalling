@@ -108,7 +108,9 @@ function App() {
       } catch (error) {
         console.error('Error managing background images:', error);
         // Use a fallback image if there's an error
-        setBackgroundImage(FALLBACK_BACKGROUNDS[Math.floor(Math.random() * FALLBACK_BACKGROUNDS.length)]);
+        const fallbackImage = FALLBACK_BACKGROUNDS[Math.floor(Math.random() * FALLBACK_BACKGROUNDS.length)];
+        setBackgroundImage(fallbackImage);
+        console.log('Using fallback image due to error:', fallbackImage);
       } finally {
         // Short timeout to ensure the loading animation is visible
         setTimeout(() => {
@@ -121,8 +123,8 @@ function App() {
   }, []);
 
   // Styles for the background image
-  const backgroundStyle = {
-    backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
+  const backgroundStyle = backgroundImage ? {
+    backgroundImage: `url(${backgroundImage})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
@@ -133,7 +135,7 @@ function App() {
     height: '100%',
     zIndex: -1,
     transition: 'opacity 1s ease-in-out'
-  };
+  } : null;
 
   // Style for the overlay to ensure text readability if needed
   const overlayStyle = {
@@ -162,9 +164,9 @@ function App() {
   };
 
   return (
-    <>
+    <div className="app-container">
       {/* Background Image */}
-      {backgroundImage && <div style={backgroundStyle}></div>}
+      {backgroundImage && <div style={backgroundStyle} data-testid="background-image"></div>}
       
       {/* Subtle overlay */}
       <div style={overlayStyle}></div>
@@ -183,10 +185,11 @@ function App() {
       <button 
         style={buttonStyle}
         onClick={clearCacheAndRefresh}
+        data-testid="clear-cache-button"
       >
         Clear Cache & Refresh
       </button>
-    </>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 // Setup file for Vitest
 import { vi } from 'vitest';
+import '@testing-library/jest-dom';
 
 // Mock localStorage
 const localStorageMock = (() => {
