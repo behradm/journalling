@@ -12,11 +12,27 @@ function App() {
   const [backgroundImage, setBackgroundImage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
+  // Function to clear cache and force refresh
+  const clearCacheAndRefresh = () => {
+    localStorage.removeItem('backgroundImageData');
+    console.log('Cache cleared');
+    window.location.reload();
+  }
+
   useEffect(() => {
     const generateAndManageBackgrounds = async () => {
       setIsLoading(true)
       
       try {
+        // Force clear cache on first load to ensure we get fresh images
+        if (window.location.search.includes('forceClear=true')) {
+          localStorage.removeItem('backgroundImageData');
+          console.log('Cache forcefully cleared by URL parameter');
+          // Remove the parameter from URL
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+        }
+        
         // Get cached data from localStorage
         const cachedData = localStorage.getItem('backgroundImageData')
         let imageData = cachedData ? JSON.parse(cachedData) : {
@@ -28,7 +44,7 @@ function App() {
         // Increment total loads counter
         imageData.totalLoads += 1
         
-        // Determine if we need to generate new images
+        // Always fetch a new image on first load after deployment
         const shouldGenerateNew = 
           // Generate new if we have fewer than 3 images
           imageData.images.length < 3 || 
@@ -37,7 +53,7 @@ function App() {
           // Generate new every 5 loads after we have 4+ images
           (imageData.images.length >= 4 && imageData.totalLoads % 5 === 0)
         
-        if (shouldGenerateNew) {
+        if (shouldGenerateNew || imageData.images.length === 0) {
           console.log('Fetching new background images from Unsplash...')
           
           // If we have no images yet, fetch 3 at once to initialize our collection
@@ -116,6 +132,21 @@ function App() {
     zIndex: -1
   }
 
+  // Style for the refresh button
+  const buttonStyle = {
+    position: 'fixed',
+    bottom: '20px',
+    right: '20px',
+    padding: '10px 15px',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    zIndex: 10
+  }
+
   return (
     <>
       {/* Background Image */}
@@ -133,6 +164,14 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Refresh Button */}
+      <button 
+        style={buttonStyle}
+        onClick={clearCacheAndRefresh}
+      >
+        Clear Cache & Refresh
+      </button>
     </>
   )
 }

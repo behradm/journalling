@@ -58,7 +58,9 @@ export const getRandomMinimalistImage = async () => {
       query: randomSearchTerm,
       orientation: 'landscape',
       content_filter: 'high',
-      color: randomColor
+      color: randomColor,
+      // Add a timestamp to prevent caching
+      _: Date.now()
     });
     
     // Add additional parameters to find more minimal, abstract images
@@ -68,7 +70,10 @@ export const getRandomMinimalistImage = async () => {
       `${UNSPLASH_API_URL}/photos/random?${params.toString()}`,
       {
         headers: {
-          'Authorization': `Client-ID ${ACCESS_KEY}`
+          'Authorization': `Client-ID ${ACCESS_KEY}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       }
     );
@@ -80,8 +85,8 @@ export const getRandomMinimalistImage = async () => {
     const data = await response.json();
     console.log('Successfully fetched image from Unsplash:', data.description || data.alt_description);
     
-    // Return the full-size image URL
-    return data.urls.full;
+    // Return the full-size image URL with a cache-busting parameter
+    return `${data.urls.full}&t=${Date.now()}`;
   } catch (error) {
     console.error('Error fetching image from Unsplash:', error);
     return null;
@@ -107,7 +112,9 @@ export const getMultipleMinimalistImages = async (count = 3) => {
       orientation: 'landscape',
       content_filter: 'high',
       color: randomColor,
-      count: count
+      count: count,
+      // Add a timestamp to prevent caching
+      _: Date.now()
     });
     
     // Add additional parameters to find more minimal, abstract images
@@ -117,7 +124,10 @@ export const getMultipleMinimalistImages = async (count = 3) => {
       `${UNSPLASH_API_URL}/photos/random?${params.toString()}`,
       {
         headers: {
-          'Authorization': `Client-ID ${ACCESS_KEY}`
+          'Authorization': `Client-ID ${ACCESS_KEY}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       }
     );
@@ -129,8 +139,8 @@ export const getMultipleMinimalistImages = async (count = 3) => {
     const data = await response.json();
     console.log(`Successfully fetched ${count} images from Unsplash`);
     
-    // Return an array of full-size image URLs
-    return data.map(photo => photo.urls.full);
+    // Return an array of full-size image URLs with cache-busting parameters
+    return data.map(photo => `${photo.urls.full}&t=${Date.now()}`);
   } catch (error) {
     console.error('Error fetching images from Unsplash:', error);
     return [];
