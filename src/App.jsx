@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { generateImage } from './services/openai'
+import { getRandomMinimalistImage, getMultipleMinimalistImages } from './services/unsplash'
 
 // Initial fallback images in case we don't have any cached images yet
 const FALLBACK_BACKGROUNDS = [
@@ -28,7 +28,7 @@ function App() {
         // Increment total loads counter
         imageData.totalLoads += 1
         
-        // Determine if we need to generate a new image
+        // Determine if we need to generate new images
         const shouldGenerateNew = 
           // Generate new if we have fewer than 3 images
           imageData.images.length < 3 || 
@@ -38,15 +38,23 @@ function App() {
           (imageData.images.length >= 4 && imageData.totalLoads % 5 === 0)
         
         if (shouldGenerateNew) {
-          console.log('Generating new background image...')
-          const prompt = "Generate an ultra-minimalist, sublime landscape that stuns with its simplicity and depth. The scene could be a vast sea reduced to a single, smooth gradient of soft blue meeting a faint horizon line; or a lone mountain peak, a sharp silhouette against a muted pastel sky; or a desert with one unbroken dune edge in warm gold fading into nothing; or a forest distilled to a single tree outlined in shadow against a hazy void. Use only 2-3 colors—subtle, tranquil tones like pale blues, lavenders, or golds—with clean, unbroken lines and expansive negative space. The horizon should pull the eye effortlessly into the distance, blending into a minimalist sky of one faint hue. The result should feel serene, infinite, and breathtaking, delivering a powerful 'WOW' through extreme simplicity."
+          console.log('Fetching new background images from Unsplash...')
           
-          const imageUrl = await generateImage(prompt)
-          
-          if (imageUrl) {
-            // Add new image to the collection
-            imageData.images.push(imageUrl)
-            console.log('New image generated and added to cache')
+          // If we have no images yet, fetch 3 at once to initialize our collection
+          if (imageData.images.length === 0) {
+            const imageUrls = await getMultipleMinimalistImages(3)
+            if (imageUrls && imageUrls.length > 0) {
+              imageData.images = imageUrls
+              console.log('Initial set of images fetched from Unsplash')
+            }
+          } else {
+            // Otherwise just fetch one new image
+            const imageUrl = await getRandomMinimalistImage()
+            if (imageUrl) {
+              // Add new image to the collection
+              imageData.images.push(imageUrl)
+              console.log('New image fetched from Unsplash and added to cache')
+            }
           }
         }
         
@@ -121,7 +129,7 @@ function App() {
         <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
           <div className="text-center">
             <div className="h-12 w-12 border-4 border-t-4 border-white border-t-indigo-500 rounded-full animate-spin mb-4 mx-auto"></div>
-            <p className="text-white text-xl">Generating your unique background...</p>
+            <p className="text-white text-xl">Loading your unique background...</p>
           </div>
         </div>
       )}
