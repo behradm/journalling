@@ -85,8 +85,8 @@ export const getRandomMinimalistImage = async () => {
     const data = await response.json();
     console.log('Successfully fetched image from Unsplash:', data.description || data.alt_description);
     
-    // Return the full-size image URL with a cache-busting parameter
-    return `${data.urls.full}&t=${Date.now()}`;
+    // Return the full-size image URL (don't modify the URL)
+    return data.urls.full;
   } catch (error) {
     console.error('Error fetching image from Unsplash:', error);
     return null;
@@ -139,8 +139,8 @@ export const getMultipleMinimalistImages = async (count = 3) => {
     const data = await response.json();
     console.log(`Successfully fetched ${count} images from Unsplash`);
     
-    // Return an array of full-size image URLs with cache-busting parameters
-    return data.map(photo => `${photo.urls.full}&t=${Date.now()}`);
+    // Return an array of full-size image URLs (don't modify the URLs)
+    return data.map(photo => photo.urls.full);
   } catch (error) {
     console.error('Error fetching images from Unsplash:', error);
     return [];
